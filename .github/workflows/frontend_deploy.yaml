@@ -37,25 +37,30 @@ jobs:
           export project_name=${{ secrets.FRONTEND_NAME }}
           pnpm install --no-frozen-lockfile
           export frontend_branch=${{ secrets.FRONTEND_BRANCH }}
+          
+          # Build and deploy main frontend
+          pnpm run build
           if [ -n "$frontend_branch" ]; then
             echo "Deploying branch $frontend_branch"
-            pnpm run deploy:actions --project-name=$project_name --branch $frontend_branch
+            pnpm exec wrangler pages deploy ./dist --project-name=$project_name --branch $frontend_branch
           else
             echo "Deploying branch production"
-            pnpm run deploy --project-name=$project_name
+            pnpm exec wrangler pages deploy ./dist --project-name=$project_name --branch production
           fi
           echo "Deploying production for ${{ github.ref_name }}"
           echo "Deployed for tag ${{ github.ref_name }}"
 
+          # Build and deploy telegram mini app if configured
           export tg_mini_app_project_name=${{ secrets.TG_FRONTEND_NAME }}
           if [ -n "$tg_mini_app_project_name" ]; then
             echo "Deploying telegram mini app $tg_mini_app_project_name"
+            pnpm run build:telegram
             if [ -n "$frontend_branch" ]; then
               echo "Deploying telegram mini app branch $frontend_branch"
-              pnpm run deploy:actions:telegram --project-name=$tg_mini_app_project_name --branch $frontend_branch
+              pnpm exec wrangler pages deploy ./dist --project-name=$tg_mini_app_project_name --branch $frontend_branch
             else
               echo "Deploying telegram mini app branch production"
-              pnpm run deploy:telegram --project-name=$tg_mini_app_project_name
+              pnpm exec wrangler pages deploy ./dist --project-name=$tg_mini_app_project_name --branch production
             fi
             echo "Deployed telegram mini app for ${{ github.ref_name }}"
           fi
